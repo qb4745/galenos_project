@@ -4,13 +4,25 @@ from rest_framework import routers
 from users import views
 
 router = routers.DefaultRouter()
-router.register(r"administracion/usuarios/gestion/users", views.UserViewSet)
 router.register(r"administracion/usuarios/gestion/roles", views.GroupViewSet)
 
-# Wire up our API using automatic URL routing.
-# Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     path("", include(router.urls)),
+    path(
+        "administracion/usuarios/gestion/crea/",
+        views.CustomUserViewSet.as_view({"post": "crea"}),
+        name="user-create",
+    ),
+    path(
+        "administracion/usuarios/gestion/lista/",
+        views.CustomUserViewSet.as_view({"get": "lista"}),
+        name="user-list",
+    ),
+    path(
+        "administracion/usuarios/gestion/lista/<int:pk>/",
+        views.CustomUserViewSet.as_view({"get": "detail"}),
+        name="user-detail",
+    ),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("admin/", admin.site.urls),
 ]
