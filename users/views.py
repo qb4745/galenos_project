@@ -1,54 +1,118 @@
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework import permissions
 from rest_framework.response import Response
-from users.serializers import UserSerializer, GroupSerializer
-from rest_framework import generics
-from rest_framework.decorators import action
-from django.http import Http404
-from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.pagination import PageNumberPagination
 
 
-class CustomUserViewSet(viewsets.ModelViewSet):
+from users.serializers import (
+    UserSerializer,
+    UserCreateSerializer,
+    GroupSerializer,
+    UserDeleteSerializer,
+    UserUpdateSerializer,
+)
+
+
+class NoPagination(PageNumberPagination):
+    page_size = None  # Disable pagination
+
+
+class UserListViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    Endpoint de la API que permite ver usuarios.
     """
 
-    queryset = User.objects.all().order_by("-date_joined")
+    queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    @action(detail=False, methods=["post"])
-    def crea(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # Hash the password before saving the user
-        user = serializer.save()
-        user.set_password(request.data.get("password"))
-        user.save()
-
-        headers = self.get_success_headers(serializer.data)
-        response_data = serializer.data
-        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
-
-    @action(detail=False, methods=["get"])
-    def lista(self, request):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def detail(self, request, pk):
-        user = User.objects.get(pk=pk)
-        serializer = self.get_serializer(user)
-        return Response(serializer.data)
+    pagination_class = NoPagination  # Disable pagination for this view
+    # permission_classes = [permissions.IsAuthenticated]
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class UserCreateViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """
-    API endpoint that allows groups to be viewed or edited.
+    Endpoint de la API que permite crear usuarios.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserCreateSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class UserDeleteViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """
+    Endpoint de la API que permite eliminar usuarios.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserDeleteSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user_id = instance.id  # Get the ID of the deleted user
+        self.perform_destroy(instance)
+        return Response(
+            {"detail": f"El usuario con el Id # {user_id} ha sido eliminado."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class UserUpdateViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """
+    Endpoint de la API que permite actualizar usuarios.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserUpdateSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class RolViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Endpoint de la API que permite ver Roles.
     """
 
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = NoPagination  # Disable pagination for this view
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class RolCreateViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """
+    Endpoint de la API que permite crear Roles.
+    """
+
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class RolDeleteViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """
+    Endpoint de la API que permite eliminar Roles.
+    """
+
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        rol_name = instance.name  # Get the ID of the deleted user
+        self.perform_destroy(instance)
+        return Response(
+            {"detail": f"El rol con el nombre de ' {rol_name} ' ha sido eliminado."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class RolUpdateViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """
+    Endpoint de la API que permite actualizar Roles.
+    """
+
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    # permission_classes = [permissions.IsAuthenticated]
