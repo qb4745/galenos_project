@@ -5,5 +5,5 @@ WORKDIR /galenos_project
 COPY galenos_project/requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 EXPOSE 8000
-EXPOSE 8001
 COPY galenos_project galenos_project
+

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: api_rest_django
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "mysql_db", "-u", "mysql", "-ppassword"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - app-tier
+    restart: always
+
+  ms-galenos-adm-usuarios:
+    build:
+      context: .
+      dockerfile: Dockerfile.galenos-usuarios
+    depends_on:
+      migration:
+        condition: service_started
+      mysql_db:
+        condition: service_healthy
+    volumes:
+      - .:/galenos_project
+    networks:
+      - app-tier
+    ports:
+      - "8000:8000"
+    command: sh -c "python /galenos_project/galenos_project/manage.py wait_for_db && python /galenos_project/galenos_project/manage.py runserver 0:8000"
+    restart: always
+
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile.galenos-usuarios
+    volumes:
+      - .:/galenos_project
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks:
+      - app-tier
+    command: sh -c "python /galenos_project/galenos_project/manage.py makemigrations && python /galenos_project/galenos_project/manage.py migrate"
+    restart: always
+
+  ms-galenos-adm-gestiona-pagos:
+    build:
+      context: .
+      dockerfile: Dockerfile.galenos-gestiona-pagos
+    depends_on:
+      migration2:
+        condition: service_started
+      mysql_db:
+        condition: service_healthy
+    volumes:
+      - .:/galenos_endpoints
+    networks:
+      - app-tier
+    ports:
+      - "8001:8001"
+    command: sh -c "python /galenos_endpoints/galenos_endpoints/manage.py wait_for_db && python /galenos_endpoints/galenos_endpoints/manage.py runserver 0:8001"
+    restart: always
+
+  migration2:
+    build:
+      context: .
+      dockerfile: Dockerfile.galenos-gestiona-pagos
+    volumes:
+      - .:/galenos_endpoints
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks:
+      - app-tier
+    command: sh -c "python /galenos_endpoints/galenos_endpoints/manage.py makemigrations && python /galenos_endpoints/galenos_endpoints/manage.py migrate"
+    restart: always
+
+networks:
+  app-tier:
+    driver: bridge
