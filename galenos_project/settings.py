@@ -79,16 +79,9 @@ WSGI_APPLICATION = "galenos_project.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "api_rest_django",
-        "USER": "mysql",
-        "PASSWORD": "password",
-        "HOST": "mysql_db",
-        "PORT": "3306",
-        "OPTIONS": {
-            "sql_mode": "traditional",
-        },
-    },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
 
 
@@ -133,11 +126,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
-}
-
 
 CORS_ALLOW_METHODS = [
     "GET",
@@ -161,7 +149,5 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Example React app
-    "http://localhost:8000",  # Django development server
-    # Add more allowed origins as needed
+    "http://localhost:8000",
 ]
